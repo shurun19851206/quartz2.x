@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+	    xmlns:aop="http://www.springframework.org/schema/aop"
+	    xmlns:tx="http://www.springframework.org/schema/tx"
+        xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd"
+        default-autowire="byName" >
+    
+    <!--Quartz -->
+    <!-- 集成方式：JobDetailFactoryBean，并且任务类需要继承QuartzJobBean -->
+    <!-- 定义jobDetail -->
+    <bean id="jobDetail"
+        class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <!-- durability 表示任务完成之后是否依然保留到数据库，默认false -->
+        <property name="durability" value="true" />
+        <!-- 目标类 /wmuitp/src/test/SpringQuartz.java -->
+        <property name="jobClass" value="quartz.demo.MyTask"></property>
+
+        <!-- 在这个例子中，jobDataAsMap没有用，此目标类中接受的参数 ,若参数为service，则可以在此进行参数配置，类似struts2 -->
+        <!-- <property name="jobDataAsMap"> <map> <entry key="service"><value>simple 
+            is the beat</value></entry> </map> </property> -->
+    </bean>
+
+    <!-- 定义simpleTrigger触发器 -->
+    <!-- <bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean"> 
+        <property name="jobDetail" ref="jobDetail"></property> <property name="repeatCount"> 
+        <value>8</value> </property> <property name="repeatInterval"> <value>1000</value> 
+        </property> <property name="startDelay"> <value>4</value> </property> </bean> -->
+
+    <!-- 另一种触发器是CornTrigger -->
+    <bean id="cornTrigger"
+        class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="jobDetail" />
+        <!-- 每个10秒触发 -->
+        <property name="cronExpression" value="0 0 0 9 * ?" />
+    </bean>
+
+    <!-- 定义核心调度器 -->
+<!--     <bean id="scheduler"
+        class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <ref bean="cornTrigger" />
+        </property>
+    </bean> -->
+    
+    <!-- demo -->
+    <!-- <bean id="scheduler"
+        class="quartz.demo.MySchedulerFactoryBean">
+        <property name="triggers">
+            <ref bean="cornTrigger" />
+        </property>
+    </bean>
+         -->
+        
+    <!--  
+    <bean name="schedulerFactoryBean" class="quartz.demo1.MySchedulerFactoryBeanDemo">
+    </bean>
+     -->
+     
+    <!-- 增加定时器配置 -->
+    <!-- 线程执行器配置，用于任务注册 -->
+    <bean id="executor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+         <property name="corePoolSize" value="10" />
+         <property name="maxPoolSize" value="100" />
+         <property name="queueCapacity" value="500" />
+    </bean>
+    
+    <bean id="dataSource_master_q" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+	    <property name="driverClass"><value>com.mysql.jdbc.Driver</value></property>
+	    <property name="jdbcUrl"><value>jdbc:mysql://127.0.0.1:3306/quartz</value></property>
+	    <property name="user"><value>root</value></property>
+	    <property name="password"><value>123456</value></property>
+	    <property name="minPoolSize"><value>1</value></property>
+	    <property name="maxPoolSize"><value>1</value></property>
+	    <property name="maxIdleTime"><value>120</value></property>
+	    <property name="idleConnectionTestPeriod"><value>1</value></property>
+	    <property name="initialPoolSize"><value>1</value></property>
+	    <property name="numHelperThreads"><value>1</value></property>
+	    <property name="acquireRetryAttempts"><value>8</value></property>
+	    <property name="testConnectionOnCheckin" value="false"/>
+	</bean>
+    
+    <!-- 设置调度 -->
+    <bean id="webScheduler" class="quartz.demo1.MySchedulerFactoryBeanDemo">
+    <!-- <bean id="webScheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean" lazy-init="false"> -->
+    	<property name="dataSource" ref="dataSource_master_q" />
+    	<property name="quartzProperties">
+			<props>
+				<prop key="org.quartz.scheduler.instanceName">WMS_INF_SCHEDULER</prop>
+				<prop key="org.quartz.scheduler.instanceId">AUTO</prop>
+				<prop key="org.quartz.jobStore.misfireThreshold">20000</prop>
+			    <prop key="org.quartz.jobStore.class">org.quartz.impl.jdbcjobstore.JobStoreTX</prop>
+				<prop key="org.quartz.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.StdJDBCDelegate</prop>
+				<prop key="org.quartz.jobStore.tablePrefix">MY_QUARTZ_</prop>
+				<prop key="org.quartz.jobStore.maxMisfiresToHandleAtATime">1</prop>
+				<prop key="org.quartz.jobStore.isClustered">true</prop>
+				<prop key="org.quartz.threadPool.threadCount">10</prop>
+				<prop key="org.quartz.plugin.triggHistory.class">org.quartz.plugins.history.LoggingJobHistoryPlugin</prop>
+			</props>
+		</property>
+    </bean>
+
+    <!-- 触发器 -->
+    <bean id="springQuertzClusterTaskSchedulerTesterTigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="springQuertzClusterTaskSchedulerTesterJobDetail"/>
+        <property name="cronExpression" value="0/5 * * * * ?" />    
+    </bean>
+    
+    <bean id="springQuertzClusterTaskSchedulerTesterJobDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="quartz.demo.MyTask" />
+        <!-- fail-over 重写执行失败的任务,default=false -->
+        <property name="requestsRecovery" value="false"/>
+        <property name="durability" value="true" />
+    </bean>
+</beans>
