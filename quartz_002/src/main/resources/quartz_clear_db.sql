@@ -1,0 +1,11 @@
+TRUNCATE `my_quartz_scheduler_state`;
+TRUNCATE `my_quartz_triggers`;
+TRUNCATE `my_quartz_blob_triggers`;
+TRUNCATE `my_quartz_calendars`;
+TRUNCATE `my_quartz_cron_triggers`;
+TRUNCATE `my_quartz_fired_triggers`;
+TRUNCATE `my_quartz_job_details`;
+TRUNCATE `my_quartz_locks`;
+TRUNCATE `my_quartz_paused_trigger_grps`;
+TRUNCATE `my_quartz_simple_triggers`;
+TRUNCATE `my_quartz_simprop_triggers`;
